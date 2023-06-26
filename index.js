@@ -41,7 +41,7 @@ const speed = 1.0;
 const format = 'mp3';
 const voice = 'jane';
 
-bot.on('message', (msg) => {
+bot.on('text', (msg) => {
   const text = msg.text;
   const fileName = text.split(' ')[0];
   const filePath = `${fileName}.mp3`;
