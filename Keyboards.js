@@ -11,7 +11,7 @@ module.exports = {
   getSpeedKb(_FAST, _NORMAL, _SLOW, _BACK) {
     return {
       reply_markup: {
-        keyboard: [[_FAST, _NORMAL, _SLOW, _BACK]],
+        keyboard: [[_FAST, _NORMAL, _SLOW], [_BACK]],
         resize_keyboard: true,
       },
     };

@@ -35,7 +35,7 @@ function synthesizeSpeech(text, lang, speed, format, voice) {
   const axiosConfig = {
     method: 'POST',
     url: 'https://tts.api.cloud.yandex.net/speech/v1/tts:synthesize',
-    data: { text, lang, speed, format },
+    data: { text, lang, speed, format, voice },
     headers: {
       Authorization: 'Api-key ' + YA_API,
       'content-type': 'multipart/form-data',
@@ -105,13 +105,14 @@ bot.on('text', (msg) => {
     case _VOICE:
       bot.sendMessage(
         msg.chat.id,
-        'Выберите озвучку',
+        'Выберите озвучку (Только для русского текста)',
         keyboard.getVoiceKb(_ALENA, _FILIPP, _ERMIL, _JANE, _MADIRUS, _OMAZH, _ZAHAR, _BACK),
       );
       break;
 
     case _RU.text:
       state.lang = _RU.data;
+      state.voice = _JANE.data;
 
       bot.sendMessage(msg.chat.id, 'Язык установлен');
       console.log(state);
@@ -119,6 +120,7 @@ bot.on('text', (msg) => {
 
     case _ENG.text:
       state.lang = _ENG.data;
+      state.voice = 'john';
 
       bot.sendMessage(msg.chat.id, 'Язык установлен');
       console.log(state);
@@ -202,35 +204,37 @@ bot.on('text', (msg) => {
         },
       });
       break;
+
+    default:
+      {
+        const fileName = text.split(' ')[0];
+        const filePath = `${fileName}.mp3`;
+
+        const data = `${msg.from.username} -- ${text}\n`;
+        console.log(state);
+
+        fs.appendFile('usersData.txt', data, (err) => {
+          if (err) throw err;
+          console.log('Data has been written to file.txt');
+        });
+
+        synthesizeSpeech(text, state.lang, state.speed, state.format, state.voice)
+          .then((audioData) => {
+            fs.writeFileSync(filePath, audioData, 'binary');
+            player.play(filePath);
+
+            bot.sendAudio(msg.chat.id, filePath);
+
+            setTimeout(() => {
+              removeFile(`./${fileName}.mp3`);
+            }, 5000);
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
+      break;
   }
-});
-
-bot.on('text', (msg) => {
-  const text = msg.text;
-  const fileName = text.split(' ')[0];
-  const filePath = `${fileName}.mp3`;
-
-  const data = `${msg.from.username} -- ${text}\n`;
-
-  fs.appendFile('usersData.txt', data, (err) => {
-    if (err) throw err;
-    console.log('Data has been written to file.txt');
-  });
-
-  synthesizeSpeech(text, state.lang, state.speed, state.format, state.voice)
-    .then((audioData) => {
-      fs.writeFileSync(filePath, audioData, 'binary');
-      player.play(filePath);
-
-      bot.sendAudio(msg.chat.id, filePath);
-
-      setTimeout(() => {
-        removeFile(`./${fileName}.mp3`);
-      }, 5000);
-    })
-    .catch((error) => {
-      console.error(error);
-    });
 });
 
 bot.on('voice', (msg) => {
